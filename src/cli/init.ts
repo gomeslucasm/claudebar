@@ -4,7 +4,7 @@ import { detectExistingStatusLine } from './detect.js';
 import { NEWS_SOURCES } from '../widgets/news.js';
 import { SOCCER_SOURCES } from '../widgets/soccer.js';
 import { messages, type Messages } from '../i18n.js';
-import type { ClaudebarConfig, LineConfig, WidgetConfig, Schedule, Lang } from '../types.js';
+import type { ClaudebarConfig, LineConfig, WidgetConfig, ProfileSwitch, Lang } from '../types.js';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -25,17 +25,6 @@ function lineLabel(line: LineConfig, m: Messages): string {
 
 // ─── time selection ──────────────────────────────────────────────────────────
 
-function timePresets(m: Messages) {
-  return [
-    { value: 'work',      label: m.presets.work,      hint: '09:00 → 18:00', from: '09:00', to: '18:00' },
-    { value: 'morning',   label: m.presets.morning,   hint: '06:00 → 12:00', from: '06:00', to: '12:00' },
-    { value: 'afternoon', label: m.presets.afternoon, hint: '12:00 → 18:00', from: '12:00', to: '18:00' },
-    { value: 'evening',   label: m.presets.evening,   hint: '18:00 → 23:00', from: '18:00', to: '23:00' },
-    { value: 'night',     label: m.presets.night,     hint: '23:00 → 06:00', from: '23:00', to: '06:00' },
-    { value: 'custom',    label: m.presets.custom },
-  ];
-}
-
 function hours(): { value: string; label: string }[] {
   const opts = [];
   for (let h = 0; h < 24; h++) {
@@ -45,21 +34,6 @@ function hours(): { value: string; label: string }[] {
     }
   }
   return opts;
-}
-
-async function selectTime(m: Messages): Promise<{ from: string; to: string }> {
-  const presets = timePresets(m);
-  const preset = await p.select({ message: m.scheduleTime, options: presets });
-  bail(preset);
-
-  const found = presets.find(t => t.value === preset);
-  if (found && preset !== 'custom') return { from: found.from!, to: found.to! };
-
-  const from = await p.select({ message: m.start, options: hours() });
-  bail(from);
-  const to = await p.select({ message: m.end, options: hours() });
-  bail(to);
-  return { from: from as string, to: to as string };
 }
 
 // ─── widget configuration ────────────────────────────────────────────────────
@@ -187,23 +161,53 @@ async function configureLines(m: Messages, detected: { name: string; command: st
   return lines;
 }
 
-// ─── schedule ────────────────────────────────────────────────────────────────
+// ─── profiles ────────────────────────────────────────────────────────────────
 
-async function configureSchedule(m: Messages, detected: { name: string; command: string } | null, defaultLines: LineConfig[]): Promise<Schedule> {
-  const name = await p.text({ message: m.scheduleName, placeholder: 'work' });
-  bail(name);
+async function configureProfiles(m: Messages, detected: { name: string; command: string } | null): Promise<Record<string, LineConfig[]>> {
+  const profiles: Record<string, LineConfig[]> = {};
 
-  const { from, to } = await selectTime(m);
+  while (true) {
+    const first = Object.keys(profiles).length === 0;
+    const nameRaw = await p.text({
+      message: m.profileName,
+      placeholder: first ? 'default' : 'evening',
+      initialValue: first ? 'default' : '',
+    });
+    bail(nameRaw);
+    let name = (nameRaw as string).trim() || (first ? 'default' : `profile${Object.keys(profiles).length + 1}`);
+    while (profiles[name]) name += '-2'; // avoid clobbering a duplicate name
 
-  p.log.message(m.whichLinesDiffer);
-  const overrides: Record<string, LineConfig> = {};
-  for (let i = 0; i < defaultLines.length; i++) {
-    const change = await p.confirm({ message: m.changeLine(i + 1, lineLabel(defaultLines[i], m)), initialValue: false });
-    bail(change);
-    if (change) overrides[String(i)] = await configureLine(i + 1, m, detected);
+    p.log.step(m.configureProfile(name));
+    profiles[name] = await configureLines(m, detected);
+
+    const more = await p.confirm({ message: m.addAnotherProfile, initialValue: false });
+    bail(more);
+    if (!more) break;
   }
 
-  return { name: name as string, from, to, overrides };
+  return profiles;
+}
+
+// ─── scheduled switches ────────────────────────────────────────────────────────
+
+async function configureSwitches(m: Messages, names: string[]): Promise<ProfileSwitch[]> {
+  const switches: ProfileSwitch[] = [];
+  const profileOptions = names.map(n => ({ value: n, label: n }));
+
+  let addMore = true;
+  while (addMore) {
+    const at = await p.select({ message: m.switchAt, options: hours() });
+    bail(at);
+    const profile = await p.select({ message: m.switchToProfile, options: profileOptions });
+    bail(profile);
+    switches.push({ at: at as string, profile: profile as string });
+
+    const more = await p.confirm({ message: m.addAnotherSwitch, initialValue: false });
+    bail(more);
+    addMore = more as boolean;
+  }
+
+  return switches;
 }
 
 // ─── main ────────────────────────────────────────────────────────────────────
@@ -231,27 +235,28 @@ export async function init(): Promise<void> {
   const detected = detectExistingStatusLine();
   if (detected) p.note(`"${detected.command}"`, m.detected(detected.name));
 
-  // ── Default ──
-  p.log.message(m.defaultSection);
-  const defaultLines = await configureLines(m, detected);
+  // ── Profiles ──
+  p.log.message(m.profilesSection);
+  const profiles = await configureProfiles(m, detected);
+  const names = Object.keys(profiles);
 
-  // ── Time-based schedules ──
-  const schedules: Schedule[] = [];
-  const withTime = await p.confirm({ message: m.addSchedules, initialValue: false });
-  bail(withTime);
-
-  if (withTime) {
-    let addMore = true;
-    while (addMore) {
-      p.log.message(m.scheduleN(schedules.length + 1));
-      schedules.push(await configureSchedule(m, detected, defaultLines));
-      const more = await p.confirm({ message: m.addAnotherSchedule, initialValue: false });
-      bail(more);
-      addMore = more as boolean;
-    }
+  // ── Active profile ──
+  let activeProfile = names[0];
+  if (names.length > 1) {
+    const a = await p.select({ message: m.chooseActive, options: names.map(n => ({ value: n, label: n })) });
+    bail(a);
+    activeProfile = a as string;
   }
 
-  const config: ClaudebarConfig = { lang: lang as Lang, default: { lines: defaultLines }, schedules };
+  // ── Time-based switching ──
+  let switches: ProfileSwitch[] = [];
+  if (names.length > 1) {
+    const auto = await p.confirm({ message: m.setupSwitching, initialValue: false });
+    bail(auto);
+    if (auto) switches = await configureSwitches(m, names);
+  }
+
+  const config: ClaudebarConfig = { lang: lang as Lang, activeProfile, profiles, switches };
   saveConfig(config);
 
   const updateSettings = await p.confirm({ message: m.updateSettings, initialValue: true });

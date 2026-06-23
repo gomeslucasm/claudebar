@@ -17,7 +17,8 @@ npm run dev        # run the CLI from TS sources via ts-node
 ```
 src/
   cli/
-    index.ts      # entry point + command dispatch (init | run)
+    index.ts      # entry point + command dispatch (init | run | profile)
+    profile.ts    # `profile` command — list / use
     init.ts       # interactive setup wizard (@clack/prompts)
     detect.ts     # detects an existing statusLine tool to wrap
   widgets/
@@ -29,7 +30,7 @@ src/
     shorten.ts    # text-shortening helpers
     rss.ts        # minimal RSS fetch/parse
   runner.ts       # resolves active lines, runs widgets, prints output
-  config.ts       # config load/save + schedule resolution
+  config.ts       # config load/save + profile resolution + legacy migration
   types.ts        # config + widget types
   i18n.ts         # en / pt-BR strings
 ```
@@ -37,7 +38,7 @@ src/
 ## How a render works
 
 1. Claude Code calls `claudebar run` and pipes a JSON payload on stdin.
-2. `runner.run()` loads `~/.claudebar/config.json` and calls `resolveLines()`, which applies any active time-based schedule over the default lines.
+2. `runner.run()` loads `~/.claudebar/config.json` and calls `resolveLines()`, which picks the active profile (manual override → scheduled switch → `activeProfile`) and returns its lines.
 3. Each line's widgets are fetched in parallel; their items are flattened and the current one is picked from a time-based index (so the bar rotates without keeping state).
 4. `passthrough` lines are special: their command runs with the stdin payload forwarded, and the output is printed verbatim (so tools like `ccstatusline` work unchanged).
 

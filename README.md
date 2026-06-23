@@ -25,7 +25,7 @@ FT | Portugal (C. Ronaldo 6', N. Mendes 17', C. Ronaldo 39', A. Nematov 60' (gc)
 
 - **🧩 Widgets** — news, football news, and a live FIFA World Cup scoreboard (with scorers next to each team).
 - **🪄 Wraps your existing status line** — keep `ccstatusline` or any custom command as one line.
-- **🕑 Time-based schedules** — different lines during work hours vs. evening, wrapping past midnight.
+- **🗂️ Profiles** — named sets of lines you switch by hand, or have switch automatically by time of day.
 - **🌍 Bilingual** — English and Portuguese (BR).
 - **⚡ Cached & fast** — network data is cached with short TTLs so the bar stays snappy.
 
@@ -66,8 +66,8 @@ claudebar init
 The interactive setup walks you through:
 
 1. **Language** — English or Portuguese (BR).
-2. **Lines** — how many status-bar lines you want, and what goes in each.
-3. **Schedules** *(optional)* — time windows where specific lines change.
+2. **Profiles** — one or more named sets of lines (e.g. `default`, `matchday`), and what goes in each line.
+3. **Switching** *(optional)* — times of day to switch profile automatically.
 4. **Hook up Claude Code** — it offers to write the `statusLine` entry into `~/.claude/settings.json` for you. Say yes and you're done.
 
 Restart Claude Code and the bar appears. If claudebar detects an existing status line tool, it offers to keep it as one of the lines so you don't lose what you had.
@@ -85,11 +85,18 @@ Each line is one or more widgets that **rotate** — every few seconds the line 
 
 Content widgets (`news`, `soccer`, `worldcup`) can be combined on one line and rotate together. `passthrough` always takes a line to itself. You pick the **seconds per item** per widget during setup (5–30s).
 
-## 🕑 Schedules
+## 🗂️ Profiles
 
-A schedule is a time window (e.g. `18:00 → 23:00`) where some lines differ from the default. Only the lines you change are overridden — everything else stays put. Windows that wrap past midnight (e.g. `23:00 → 06:00`) work as expected.
+A **profile** is a complete, named set of lines — e.g. `default` and `matchday`. Switch by hand at any time:
 
-> Example: keep your normal status line during work hours, then switch line 2 to the World Cup scoreboard in the evening.
+```bash
+claudebar profile            # list profiles, marks the active one
+claudebar profile use matchday
+```
+
+Or schedule switches by time of day. Each **switch** flips the active profile at a wall-clock time; a manual switch holds until the next scheduled one fires. The day wraps past midnight, so the last switch of the day carries over into the early hours.
+
+> Example: a `default` profile during the day, switch to `matchday` at 18:00, back to `default` at 23:00.
 
 ## ⚙️ Configuration
 
@@ -98,28 +105,27 @@ Config lives at `~/.claudebar/config.json`. Re-run `claudebar init` to rebuild i
 ```jsonc
 {
   "lang": "en",
-  "default": {
-    "lines": [
+  "activeProfile": "default",
+  "profiles": {
+    "default": [
       [{ "widget": "passthrough", "command": "npx -y ccstatusline@latest" }],
-      [{ "widget": "news", "sources": ["HN", "TechCrunch"], "interval": 10 }],
-      [{ "widget": "worldcup", "interval": 8 }]
+      [{ "widget": "news", "sources": ["HN", "TechCrunch"], "interval": 10 }]
+    ],
+    "matchday": [
+      [{ "widget": "worldcup", "interval": 8 }],
+      [{ "widget": "soccer", "sources": ["GloboEsporte"], "interval": 10 }]
     ]
   },
-  "schedules": [
-    {
-      "name": "evening",
-      "from": "18:00",
-      "to": "23:00",
-      "overrides": {
-        "1": [{ "widget": "soccer", "sources": ["GloboEsporte"], "interval": 10 }]
-      }
-    }
+  "switches": [
+    { "at": "18:00", "profile": "matchday" },
+    { "at": "23:00", "profile": "default" }
   ]
 }
 ```
 
-- **`lines`** — an array of lines; each line is an array of widgets.
-- **`overrides`** — keyed by line index (as a string), sparse: only the lines that change.
+- **`profiles`** — named sets of lines; each line is an array of widgets.
+- **`activeProfile`** — the profile shown when no switch is in effect.
+- **`switches`** — `{ at, profile }` pairs that flip the active profile at a time of day. Omit for manual-only switching.
 - **`interval`** — seconds each item stays before the line rotates.
 
 Cached network data is stored under `~/.claudebar/cache/` with short TTLs.
@@ -130,6 +136,8 @@ Cached network data is stored under `~/.claudebar/cache/` with short TTLs.
 |---|---|
 | `claudebar init` | Interactive setup. |
 | `claudebar run` | Render the lines once — this is what Claude Code calls on each refresh. |
+| `claudebar profile` | List profiles, marking the active one. |
+| `claudebar profile use <name>` | Switch profile, holding until the next scheduled switch. |
 
 ## 🔌 How it connects to Claude Code
 

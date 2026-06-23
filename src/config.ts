@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import type { ClaudebarConfig, LineConfig } from './types.js';
+import type { ClaudebarConfig, LineConfig, ProfileSwitch } from './types.js';
 
 export const CONFIG_DIR = join(homedir(), '.claudebar');
 export const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -14,7 +14,27 @@ export function configExists(): boolean {
 
 export function loadConfig(): ClaudebarConfig | null {
   if (!existsSync(CONFIG_FILE)) return null;
-  return JSON.parse(readFileSync(CONFIG_FILE, 'utf8')) as ClaudebarConfig;
+  const raw = JSON.parse(readFileSync(CONFIG_FILE, 'utf8'));
+  return migrate(raw);
+}
+
+// Converts the pre-profiles schema (default.lines + schedules with per-line
+// overrides) into the profile model, so old configs keep working.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrate(raw: any): ClaudebarConfig {
+  if (raw && raw.profiles) return raw as ClaudebarConfig;
+
+  const base: LineConfig[] = raw?.default?.lines ?? [[]];
+  const profiles: Record<string, LineConfig[]> = { default: base };
+  const switches: ProfileSwitch[] = [];
+
+  for (const s of raw?.schedules ?? []) {
+    profiles[s.name] = base.map((line: LineConfig, i: number) => s.overrides?.[String(i)] ?? line);
+    switches.push({ at: s.from, profile: s.name });
+    switches.push({ at: s.to, profile: 'default' });
+  }
+
+  return { lang: raw?.lang ?? 'en', activeProfile: 'default', profiles, switches };
 }
 
 export function saveConfig(config: ClaudebarConfig): void {
@@ -31,28 +51,56 @@ export function saveClaudeSettings(settings: Record<string, unknown>): void {
   writeFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
 }
 
-// Merges default lines with schedule overrides.
-export function resolveLines(config: ClaudebarConfig): LineConfig[] {
-  const base = config.default.lines;
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
+const toMin = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+};
 
-  const toMin = (hhmm: string) => {
-    const [h, m] = hhmm.split(':').map(Number);
-    return h * 60 + m;
-  };
+// Resolves which profile is active right now. A manual override wins until its
+// `until` time; otherwise scheduled switches decide by wall clock; with no
+// switches, the manually-selected `activeProfile` is used.
+export function resolveProfileName(config: ClaudebarConfig, now: Date = new Date()): string {
+  const fallback = config.activeProfile ?? Object.keys(config.profiles)[0];
 
-  for (const schedule of config.schedules ?? []) {
-    const from = toMin(schedule.from);
-    const to = toMin(schedule.to);
-    const active = from <= to
-      ? cur >= from && cur < to
-      : cur >= from || cur < to;
-
-    if (active) {
-      return base.map((line, i) => schedule.overrides?.[String(i)] ?? line);
-    }
+  if (config.override
+      && new Date(config.override.until).getTime() > now.getTime()
+      && config.profiles[config.override.profile]) {
+    return config.override.profile;
   }
 
-  return base;
+  const switches = (config.switches ?? []).filter(s => config.profiles[s.profile]);
+  if (!switches.length) return fallback;
+
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const sorted = [...switches].sort((a, b) => toMin(a.at) - toMin(b.at));
+  // Before the first switch of the day, the last switch (carried from
+  // yesterday) is still in effect.
+  let chosen = sorted[sorted.length - 1].profile;
+  for (const s of sorted) if (toMin(s.at) <= cur) chosen = s.profile;
+  return chosen;
+}
+
+export function resolveLines(config: ClaudebarConfig, now: Date = new Date()): LineConfig[] {
+  const name = resolveProfileName(config, now);
+  return config.profiles[name] ?? config.profiles[config.activeProfile] ?? Object.values(config.profiles)[0] ?? [];
+}
+
+// The next scheduled switch strictly after `now` (today, else tomorrow).
+export function nextSwitchTime(now: Date, switches: ProfileSwitch[]): Date | null {
+  if (!switches.length) return null;
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const mins = switches.map(s => toMin(s.at)).sort((a, b) => a - b);
+  const next = mins.find(m => m > cur);
+  const d = new Date(now);
+  if (next === undefined) { d.setDate(d.getDate() + 1); d.setHours(Math.floor(mins[0] / 60), mins[0] % 60, 0, 0); }
+  else { d.setHours(Math.floor(next / 60), next % 60, 0, 0); }
+  return d;
+}
+
+// Switch profile by hand. The choice holds until the next scheduled switch.
+export function useProfile(config: ClaudebarConfig, name: string, now: Date = new Date()): void {
+  config.activeProfile = name;
+  const next = nextSwitchTime(now, config.switches ?? []);
+  if (next) config.override = { profile: name, until: next.toISOString() };
+  else delete config.override;
 }

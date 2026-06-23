@@ -29,15 +29,15 @@ export interface Messages {
   whatToDo: string;
   confirm: string;
   reconfigureLine: (n: number) => string;
-  addSchedules: string;
-  scheduleN: (n: number) => string;
-  scheduleName: string;
-  scheduleTime: string;
-  start: string;
-  end: string;
-  whichLinesDiffer: string;
-  changeLine: (n: number, label: string) => string;
-  addAnotherSchedule: string;
+  profilesSection: string;
+  profileName: string;
+  configureProfile: (name: string) => string;
+  addAnotherProfile: string;
+  chooseActive: string;
+  setupSwitching: string;
+  switchAt: string;
+  switchToProfile: string;
+  addAnotherSwitch: string;
   updateSettings: string;
   done: string;
   empty: string;
@@ -74,15 +74,15 @@ const en: Messages = {
   whatToDo: 'What would you like to do?',
   confirm: 'Confirm',
   reconfigureLine: (n) => `Reconfigure line ${n}`,
-  addSchedules: 'Add time-based configurations?',
-  scheduleN: (n) => `── Schedule ${n} ──`,
-  scheduleName: 'Schedule name:',
-  scheduleTime: 'Time range for this schedule:',
-  start: 'Start:',
-  end: 'End:',
-  whichLinesDiffer: 'Which lines differ from default? (leave unchanged to inherit)',
-  changeLine: (n, label) => `Line ${n} (${label}) — change?`,
-  addAnotherSchedule: 'Add another schedule?',
+  profilesSection: '── Profiles (named sets of lines) ──',
+  profileName: 'Profile name:',
+  configureProfile: (name) => `Profile "${name}"`,
+  addAnotherProfile: 'Add another profile?',
+  chooseActive: 'Which profile is active by default?',
+  setupSwitching: 'Switch profiles automatically by time of day?',
+  switchAt: 'Switch at:',
+  switchToProfile: 'Switch to which profile?',
+  addAnotherSwitch: 'Add another switch?',
   updateSettings: 'Update ~/.claude/settings.json?',
   done: 'Done!  Config: ~/.claudebar/config.json  |  Try: claudebar run',
   empty: '(empty)',
@@ -119,15 +119,15 @@ const pt: Messages = {
   whatToDo: 'O que deseja fazer?',
   confirm: 'Confirmar',
   reconfigureLine: (n) => `Reconfigurar linha ${n}`,
-  addSchedules: 'Adicionar configurações por horário?',
-  scheduleN: (n) => `── Schedule ${n} ──`,
-  scheduleName: 'Nome do schedule:',
-  scheduleTime: 'Horário deste schedule:',
-  start: 'Início:',
-  end: 'Fim:',
-  whichLinesDiffer: 'Quais linhas são diferentes do default? (deixe igual para herdar)',
-  changeLine: (n, label) => `Linha ${n} (${label}) — alterar?`,
-  addAnotherSchedule: 'Adicionar outro schedule?',
+  profilesSection: '── Profiles (conjuntos de linhas nomeados) ──',
+  profileName: 'Nome do profile:',
+  configureProfile: (name) => `Profile "${name}"`,
+  addAnotherProfile: 'Adicionar outro profile?',
+  chooseActive: 'Qual profile fica ativo por padrão?',
+  setupSwitching: 'Trocar de profile automaticamente por horário?',
+  switchAt: 'Trocar às:',
+  switchToProfile: 'Trocar para qual profile?',
+  addAnotherSwitch: 'Adicionar outra troca?',
   updateSettings: 'Atualizar ~/.claude/settings.json?',
   done: 'Pronto!  Config: ~/.claudebar/config.json  |  Teste: claudebar run',
   empty: '(vazia)',

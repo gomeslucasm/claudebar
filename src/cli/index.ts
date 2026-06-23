@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { run } from '../runner.js';
 import { init } from './init.js';
+import { profile } from './profile.js';
 
 const cmd = process.argv[2];
 
@@ -13,10 +14,16 @@ switch (cmd) {
     init().catch(e => { console.error(e); process.exit(1); });
     break;
 
-  default:
-    console.log(`claudebar <comando>
+  case 'profile':
+    profile(process.argv.slice(3));
+    break;
 
-  init    Configuração interativa
-  run     Roda e imprime as linhas do status bar
+  default:
+    console.log(`claudebar <command>
+
+  init               Interactive setup
+  run                Render and print the status bar lines
+  profile            List profiles (marks the active one)
+  profile use <name> Switch profile (holds until the next scheduled switch)
 `);
 }

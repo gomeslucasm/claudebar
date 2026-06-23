@@ -26,22 +26,28 @@ export type WidgetConfig = PassthroughWidget | NewsWidget | SoccerWidget | World
 // Passthrough is always solo (output is opaque).
 export type LineConfig = WidgetConfig[];
 
-export interface DefaultConfig {
-  lines: LineConfig[];
+// A profile is a complete, named set of lines.
+export type Profile = LineConfig[];
+
+// A scheduled switch flips the active profile at a wall-clock time ("HH:MM").
+export interface ProfileSwitch {
+  at: string;
+  profile: string;
 }
 
-export interface Schedule {
-  name: string;
-  from: string;
-  to: string;
-  // sparse: only lines that differ from default
-  overrides: Record<string, LineConfig>;
+// Set when the user switches profile by hand; holds until the next scheduled
+// switch fires (`until` is an absolute timestamp).
+export interface ManualOverride {
+  profile: string;
+  until: string;
 }
 
 export type Lang = 'en' | 'pt';
 
 export interface ClaudebarConfig {
   lang: Lang;
-  default: DefaultConfig;
-  schedules: Schedule[];
+  activeProfile: string;
+  profiles: Record<string, Profile>;
+  switches: ProfileSwitch[];
+  override?: ManualOverride;
 }
