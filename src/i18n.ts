@@ -45,6 +45,24 @@ export interface Messages {
   labelSoccer: (sources: string) => string;
   labelWorldcup: string;
   presets: { work: string; morning: string; afternoon: string; evening: string; night: string; custom: string };
+  // profile management (add / edit / remove / switches)
+  pm: {
+    addIntro: string;
+    editIntro: (n: string) => string;
+    nameTaken: (n: string) => string;
+    unknown: (n: string, list: string) => string;
+    useNow: (n: string) => string;
+    removeConfirm: (n: string) => string;
+    cannotRemoveLast: string;
+    added: (n: string) => string;
+    edited: (n: string) => string;
+    removed: (n: string) => string;
+    switchAdded: (at: string, n: string) => string;
+    switchRemoved: (at: string) => string;
+    switchNone: (at: string) => string;
+    badTime: string;
+    prunedSwitches: (n: number) => string;
+  };
 }
 
 const en: Messages = {
@@ -90,6 +108,23 @@ const en: Messages = {
   labelSoccer: (s) => `Football (${s})`,
   labelWorldcup: 'World Cup',
   presets: { work: 'Work day', morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', night: 'Late night', custom: 'Custom…' },
+  pm: {
+    addIntro: 'Add a profile',
+    editIntro: (n) => `Edit profile "${n}"`,
+    nameTaken: (n) => `Profile "${n}" already exists. Edit it with: claudebar profile edit ${n}`,
+    unknown: (n, list) => `Unknown profile "${n}". Available: ${list}`,
+    useNow: (n) => `Switch to "${n}" now?`,
+    removeConfirm: (n) => `Delete profile "${n}"? This cannot be undone.`,
+    cannotRemoveLast: 'Cannot remove the only profile.',
+    added: (n) => `Added profile "${n}".`,
+    edited: (n) => `Updated profile "${n}".`,
+    removed: (n) => `Removed profile "${n}".`,
+    switchAdded: (at, n) => `Scheduled: ${at} → ${n}`,
+    switchRemoved: (at) => `Removed scheduled switch at ${at}.`,
+    switchNone: (at) => `No scheduled switch at ${at}.`,
+    badTime: 'Time must be HH:MM (00:00–23:59).',
+    prunedSwitches: (n) => `Also removed ${n} scheduled switch${n === 1 ? '' : 'es'} pointing to it.`,
+  },
 };
 
 const pt: Messages = {
@@ -135,6 +170,23 @@ const pt: Messages = {
   labelSoccer: (s) => `Futebol (${s})`,
   labelWorldcup: 'Copa do Mundo',
   presets: { work: 'Dia de trabalho', morning: 'Manhã', afternoon: 'Tarde', evening: 'Noite', night: 'Madrugada', custom: 'Personalizado…' },
+  pm: {
+    addIntro: 'Adicionar um profile',
+    editIntro: (n) => `Editar profile "${n}"`,
+    nameTaken: (n) => `Profile "${n}" já existe. Edite com: claudebar profile edit ${n}`,
+    unknown: (n, list) => `Profile "${n}" não existe. Disponíveis: ${list}`,
+    useNow: (n) => `Trocar para "${n}" agora?`,
+    removeConfirm: (n) => `Excluir o profile "${n}"? Isso não tem volta.`,
+    cannotRemoveLast: 'Não dá pra remover o único profile.',
+    added: (n) => `Profile "${n}" adicionado.`,
+    edited: (n) => `Profile "${n}" atualizado.`,
+    removed: (n) => `Profile "${n}" removido.`,
+    switchAdded: (at, n) => `Agendado: ${at} → ${n}`,
+    switchRemoved: (at) => `Troca agendada às ${at} removida.`,
+    switchNone: (at) => `Nenhuma troca agendada às ${at}.`,
+    badTime: 'Horário deve ser HH:MM (00:00–23:59).',
+    prunedSwitches: (n) => `Também removi ${n} troca${n === 1 ? '' : 's'} agendada${n === 1 ? '' : 's'} que apontava${n === 1 ? '' : 'm'} pra ele.`,
+  },
 };
 
 export function messages(lang: Lang): Messages {
