@@ -3,7 +3,7 @@ import { saveConfig, saveClaudeSettings, loadClaudeSettings, configExists } from
 import { detectExistingStatusLine } from './detect.js';
 import { messages, type Messages } from '../i18n.js';
 import { bail, configureLines, hours, type Detected } from './wizard.js';
-import type { ClaudebarConfig, LineConfig, ProfileSwitch, Lang } from '../types.js';
+import type { ClaudelobbyConfig, LineConfig, ProfileSwitch, Lang } from '../types.js';
 
 // ─── profiles ────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,7 @@ export async function init(): Promise<void> {
     if (auto) switches = await configureSwitches(m, names);
   }
 
-  const config: ClaudebarConfig = { lang: lang as Lang, activeProfile, profiles, switches };
+  const config: ClaudelobbyConfig = { lang: lang as Lang, activeProfile, profiles, switches };
   saveConfig(config);
 
   const updateSettings = await p.confirm({ message: m.updateSettings, initialValue: true });

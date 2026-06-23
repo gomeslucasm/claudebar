@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import type { ClaudebarConfig, LineConfig, ProfileSwitch } from './types.js';
+import type { ClaudelobbyConfig, LineConfig, ProfileSwitch } from './types.js';
 
 export const CONFIG_DIR = join(homedir(), '.claudelobby');
 export const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -12,7 +12,7 @@ export function configExists(): boolean {
   return existsSync(CONFIG_FILE);
 }
 
-export function loadConfig(): ClaudebarConfig | null {
+export function loadConfig(): ClaudelobbyConfig | null {
   if (!existsSync(CONFIG_FILE)) return null;
   const raw = JSON.parse(readFileSync(CONFIG_FILE, 'utf8'));
   return migrate(raw);
@@ -21,8 +21,8 @@ export function loadConfig(): ClaudebarConfig | null {
 // Converts the pre-profiles schema (default.lines + schedules with per-line
 // overrides) into the profile model, so old configs keep working.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function migrate(raw: any): ClaudebarConfig {
-  if (raw && raw.profiles) return raw as ClaudebarConfig;
+function migrate(raw: any): ClaudelobbyConfig {
+  if (raw && raw.profiles) return raw as ClaudelobbyConfig;
 
   const base: LineConfig[] = raw?.default?.lines ?? [[]];
   const profiles: Record<string, LineConfig[]> = { default: base };
@@ -37,7 +37,7 @@ function migrate(raw: any): ClaudebarConfig {
   return { lang: raw?.lang ?? 'en', activeProfile: 'default', profiles, switches };
 }
 
-export function saveConfig(config: ClaudebarConfig): void {
+export function saveConfig(config: ClaudelobbyConfig): void {
   mkdirSync(CONFIG_DIR, { recursive: true });
   writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
@@ -59,7 +59,7 @@ const toMin = (hhmm: string) => {
 // Resolves which profile is active right now. A manual override wins until its
 // `until` time; otherwise scheduled switches decide by wall clock; with no
 // switches, the manually-selected `activeProfile` is used.
-export function resolveProfileName(config: ClaudebarConfig, now: Date = new Date()): string {
+export function resolveProfileName(config: ClaudelobbyConfig, now: Date = new Date()): string {
   const fallback = config.activeProfile ?? Object.keys(config.profiles)[0];
 
   if (config.override
@@ -80,7 +80,7 @@ export function resolveProfileName(config: ClaudebarConfig, now: Date = new Date
   return chosen;
 }
 
-export function resolveLines(config: ClaudebarConfig, now: Date = new Date()): LineConfig[] {
+export function resolveLines(config: ClaudelobbyConfig, now: Date = new Date()): LineConfig[] {
   const name = resolveProfileName(config, now);
   return config.profiles[name] ?? config.profiles[config.activeProfile] ?? Object.values(config.profiles)[0] ?? [];
 }
@@ -98,7 +98,7 @@ export function nextSwitchTime(now: Date, switches: ProfileSwitch[]): Date | nul
 }
 
 // Switch profile by hand. The choice holds until the next scheduled switch.
-export function useProfile(config: ClaudebarConfig, name: string, now: Date = new Date()): void {
+export function useProfile(config: ClaudelobbyConfig, name: string, now: Date = new Date()): void {
   config.activeProfile = name;
   const next = nextSwitchTime(now, config.switches ?? []);
   if (next) config.override = { profile: name, until: next.toISOString() };

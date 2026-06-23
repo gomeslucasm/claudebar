@@ -28,7 +28,7 @@ export interface ManualOverride {
     until: string;
 }
 export type Lang = 'en' | 'pt';
-export interface ClaudebarConfig {
+export interface ClaudelobbyConfig {
     lang: Lang;
     activeProfile: string;
     profiles: Record<string, Profile>;

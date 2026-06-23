@@ -3,9 +3,9 @@ import { loadConfig, saveConfig, resolveProfileName, useProfile } from '../confi
 import { messages } from '../i18n.js';
 import { detectExistingStatusLine } from './detect.js';
 import { bail, configureLines } from './wizard.js';
-import type { ClaudebarConfig } from '../types.js';
+import type { ClaudelobbyConfig } from '../types.js';
 
-function fmtHold(config: ClaudebarConfig): string {
+function fmtHold(config: ClaudelobbyConfig): string {
   if (!config.override) return '';
   const d = new Date(config.override.until);
   return ` (until ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')})`;
