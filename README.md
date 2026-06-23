@@ -16,9 +16,9 @@ into the status line at the bottom of your terminal, and swap what's shown by ti
 claudebar plugs into Claude Code's `statusLine` hook, so it shows up automatically while you work. Each line **cycles** through its items every few seconds. Already using a status line tool like `ccstatusline`? claudebar keeps it running as one of its lines.
 
 ```text
-[Folha] Putin admite impacto de ataques de Kiev; tensão cresce…  http://spoo.me/aeAcPq  (1s)
-FT | Portugal (C. Ronaldo 6', N. Mendes 17', C. Ronaldo 39', A. Nematov 60' (gc)) 5 x 0 Uzbekistan  (1s)
-[ESPN-soccer] World Cup live updates: Ronaldo nets a pair of goa…  http://spoo.me/N4CUjy  (1s)
+[UOL] Sánchez, do Peru, diz que não reconhecerá resultados do segundo turno…  http://spoo.me/…  (8s)
+FT | Portugal (C. Ronaldo 6', N. Mendes 17', C. Ronaldo 39', A. Nematov 60' (gc)) 5 x 0 Uzbekistan  (8s)
+[BBC-sport] The trial that saved Antoine Semenyo's career  http://spoo.me/BhJrmH  (8s)
 ```
 
 ## ✨ Features
