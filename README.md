@@ -38,13 +38,15 @@ FT | Portugal (C. Ronaldo 6', N. Mendes 17', C. Ronaldo 39', A. Nematov 60' (gc)
 
 ## 📦 Install
 
-claudelobby isn't on npm yet. The simplest way is to install it straight from GitHub:
+claudelobby isn't on npm yet. Install it straight from GitHub:
 
 ```bash
-npm install -g github:gomeslucasm/claudelobby
+npm install -g --install-links=true github:gomeslucasm/claudelobby
 ```
 
 That puts the `claudelobby` command on your `PATH`. Run the same command again to update. The build output (`dist/`) is committed, so the install needs no compiler and no build step — handy behind locked-down corporate networks.
+
+> **Why `--install-links=true`?** npm's default (`install-links=false`) symlinks a git dependency to a temporary clone that's then cleaned up, leaving a broken `claudelobby` command. The flag tells npm to copy the files in properly. (Once it's published to npm, a plain `npm install -g claudelobby` will work without the flag.)
 
 <details>
 <summary>Install from a local clone instead</summary>
