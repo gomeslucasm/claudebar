@@ -36,13 +36,13 @@ FT | Portugal (C. Ronaldo 6', N. Mendes 17', C. Ronaldo 39', A. Nematov 60' (gc)
 
 ## 📦 Install
 
-claudebar isn't on npm yet. The simplest way is to install it straight from GitHub (you need access to the repo) — it builds itself on install:
+claudebar isn't on npm yet. The simplest way is to install it straight from GitHub:
 
 ```bash
 npm install -g github:gomeslucasm/claudebar
 ```
 
-That puts the `claudebar` command on your `PATH`. Run the same command again to update.
+That puts the `claudebar` command on your `PATH`. Run the same command again to update. The build output (`dist/`) is committed, so the install needs no compiler and no build step — handy behind locked-down corporate networks.
 
 <details>
 <summary>Install from a local clone instead</summary>
@@ -50,11 +50,11 @@ That puts the `claudebar` command on your `PATH`. Run the same command again to 
 ```bash
 git clone https://github.com/gomeslucasm/claudebar.git
 cd claudebar
-npm install      # runs the build automatically (prepare script)
+npm install      # runtime deps only
 npm link         # makes the `claudebar` command available globally
 ```
 
-If you'd rather not link, call `node /path/to/claudebar/dist/cli/index.js` directly.
+`dist/` ships in the repo, so this works without building. If you change the source, run `npm run build`. If you'd rather not link, call `node /path/to/claudebar/dist/cli/index.js` directly.
 </details>
 
 ## 🚀 Quick start

@@ -1,0 +1,14 @@
+import type { ClaudebarConfig, LineConfig, ProfileSwitch } from './types.js';
+export declare const CONFIG_DIR: string;
+export declare const CONFIG_FILE: string;
+export declare const CLAUDE_SETTINGS: string;
+export declare const CACHE_DIR: string;
+export declare function configExists(): boolean;
+export declare function loadConfig(): ClaudebarConfig | null;
+export declare function saveConfig(config: ClaudebarConfig): void;
+export declare function loadClaudeSettings(): Record<string, unknown>;
+export declare function saveClaudeSettings(settings: Record<string, unknown>): void;
+export declare function resolveProfileName(config: ClaudebarConfig, now?: Date): string;
+export declare function resolveLines(config: ClaudebarConfig, now?: Date): LineConfig[];
+export declare function nextSwitchTime(now: Date, switches: ProfileSwitch[]): Date | null;
+export declare function useProfile(config: ClaudebarConfig, name: string, now?: Date): void;

@@ -10,6 +10,10 @@ npm run build      # tsc -> dist/
 npm run dev        # run the CLI from TS sources via ts-node
 ```
 
+> `dist/` is committed to the repo so `npm install -g github:…` works with no
+> build step (and no compiler) — important for installs behind restricted
+> networks. **Rebuild and commit `dist/` whenever you change `src/`.**
+
 `npm run dev` runs `src/cli/index.ts` directly. Pass a subcommand, e.g. `npm run dev -- run`.
 
 ## Project layout
