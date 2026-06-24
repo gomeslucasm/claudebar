@@ -4,6 +4,14 @@ import { getItems as getNewsItems } from './widgets/news.js';
 import { getItems as getSoccerItems } from './widgets/soccer.js';
 import { getItems as getWorldCupItems } from './widgets/worldcup.js';
 const DEFAULT_INTERVAL = 10;
+// Remote feed content (titles/links) is untrusted; strip ESC and other C0/C1
+// control bytes so a malicious feed can't inject terminal escape sequences into
+// the status line. Passthrough output is intentionally left untouched (it may
+// carry legitimate ANSI colors from tools like ccstatusline).
+function stripControl(s) {
+    // eslint-disable-next-line no-control-regex
+    return s.replace(/[\x00-\x1f\x7f-\x9f]/g, ' ');
+}
 async function widgetItems(widget, lang) {
     switch (widget.widget) {
         case 'news': return getNewsItems(widget);
@@ -20,7 +28,7 @@ async function runLine(line, lang, stdin) {
         return runPassthrough(line[0], stdin);
     }
     // Collect all items from all widgets in parallel
-    const allItems = (await Promise.all(line.map(w => widgetItems(w, lang)))).flat().filter(Boolean);
+    const allItems = (await Promise.all(line.map(w => widgetItems(w, lang)))).flat().filter(Boolean).map(stripControl);
     if (!allItems.length)
         return '';
     const interval = line[0].interval ?? DEFAULT_INTERVAL;
